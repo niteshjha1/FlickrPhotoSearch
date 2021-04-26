@@ -29,6 +29,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         this.mList = mList;
     }
 
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public ImageView mImageView;
         public ViewHolder(View itemView) {
@@ -65,4 +66,10 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
     public void addAll(List<PhotoModel> newList) {
         mList.addAll(newList);
     }
+
+    public void clearList() {
+        mList.clear();
+    }
+
+
 }
