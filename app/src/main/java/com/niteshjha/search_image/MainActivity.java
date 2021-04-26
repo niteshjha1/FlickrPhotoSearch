@@ -12,7 +12,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int COLUMN_NUM = 1;
 
+    public static final String API_KEY = "37ad288835e4c64fc0cb8af3f3a1a65d";
+    private static final String METHOD_SEARCH = "flickr.photos.search";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,10 +59,17 @@ public class MainActivity extends AppCompatActivity {
                 int totalItem = mLayoutManager.getItemCount();
                 int lastItemPos = mLayoutManager.findLastVisibleItemPosition();
                 if (mHasMore && !mLoading && totalItem - 1 != lastItemPos) {
-
                 }
             }
         });
+
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("method", METHOD_SEARCH);
+        parameters.put("api_key", API_KEY);
+        parameters.put("format", "json");
+        parameters.put("nojsoncallback", "1");
+        parameters.put("safe_search", "1");
+        parameters.put("text", "cat");
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.flickr.com/services/rest/")
@@ -66,13 +78,13 @@ public class MainActivity extends AppCompatActivity {
 
         flickrApi = retrofit.create(FlickrApi.class);
 
-        Call<JsonObject> call = flickrApi.getImages();
+        Call<JsonObject> call = flickrApi.getPhotos(parameters);
 
         call.enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (!response.isSuccessful()) {
-                    textViewResult.setText("Code: " + response.code());
+//                    textViewResult.setText("Code: " + response.code());
                     return;
                 }
 
