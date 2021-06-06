@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean mLoading = false;
     private boolean mHasMore = true;
 
-    private static final int COLUMN_NUM = 1;
+    private static final int COLUMN_NUM = 3;
 
     public static final String API_KEY = "37ad288835e4c64fc0cb8af3f3a1a65d";
     private static final String METHOD_SEARCH = "flickr.photos.search";

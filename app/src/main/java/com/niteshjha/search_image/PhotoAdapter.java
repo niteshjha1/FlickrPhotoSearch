@@ -1,6 +1,7 @@
 package com.niteshjha.search_image;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +20,7 @@ import static java.lang.String.valueOf;
 public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> {
 
     private Context mContext;
-    private List<PhotoModel> mList;
+    private static List<PhotoModel> mList;
 
     private PhotoModel mItem;
     public ImageView mPhoto;
@@ -32,9 +33,28 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public ImageView mImageView;
+        Context context;
+
         public ViewHolder(View itemView) {
             super(itemView);
             mImageView = (ImageView) itemView.findViewById(R.id.gallery_item);
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    Log.e("Item number clicked", String.valueOf(getAdapterPosition()));
+
+
+                    Intent intent = new Intent(itemView.getContext(), FullImage.class);
+                    intent.putExtra("Image_Url", mList.get(getAdapterPosition()).getUrl());
+
+                    itemView.getContext().startActivity(intent);
+
+
+//                    intent.putExtra("name", String.valueOf(getAdapterPosition()));
+//                    context.startActivity(intent);
+                }
+            });
         }
     }
 
