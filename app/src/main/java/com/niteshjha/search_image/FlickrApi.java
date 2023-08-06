@@ -14,6 +14,5 @@ import retrofit2.http.QueryMap;
 public interface FlickrApi {
 
     @GET("?method=flickr.photos.")
-    Call<JsonObject>getPhotos(
-            @QueryMap Map<String, String > parameters);
+    Call<JsonObject> getPhotos(@QueryMap Map<String, String> parameters);
 }

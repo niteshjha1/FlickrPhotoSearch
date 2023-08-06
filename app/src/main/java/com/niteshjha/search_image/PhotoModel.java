@@ -1,8 +1,5 @@
 package com.niteshjha.search_image;
 
-import android.graphics.Bitmap;
-import android.media.Image;
-
 public class PhotoModel {
 
     private String id;
