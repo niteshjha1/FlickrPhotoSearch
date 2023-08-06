@@ -2,15 +2,19 @@ package com.niteshjha.search_image;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -78,6 +82,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mAdapter.setOnItemClickListener(photo -> {
+            showImageDialog(photo);
+        });
     }
 
     // Method to perform image search using Retrofit and Flickr API
@@ -151,4 +158,26 @@ public class MainActivity extends AppCompatActivity {
         mAdapter.getList().clear();
         mAdapter.notifyDataSetChanged();
     }
+
+    private void showImageDialog(PhotoModel photo) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_view, null);
+
+        ImageView dialogImageView = dialogView.findViewById(R.id.dialog_image);
+        Button saveButton = dialogView.findViewById(R.id.dialog_save_button);
+
+        // Load and set the image to the dialog ImageView
+        Glide.with(this)
+                .load(photo.getUrl())
+                .into(dialogImageView);
+
+        // click "Save" button
+        saveButton.setOnClickListener(view -> {
+        });
+
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
 }

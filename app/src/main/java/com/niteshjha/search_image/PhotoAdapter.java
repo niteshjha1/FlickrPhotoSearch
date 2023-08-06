@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -17,6 +18,31 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     private Context mContext;
     private List<PhotoModel> mList;
+    private OnItemClickListener itemClickListener;
+
+    public interface OnItemClickListener {
+        void onItemClick(PhotoModel photo);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        itemClickListener = listener;
+    }
+
+    @NonNull
+    @Override
+    public PhotoAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.photo_item, parent, false);
+
+        ViewHolder vh = new ViewHolder(v);
+        vh.mImageView.setOnClickListener(view -> {
+            int position = vh.getAdapterPosition();
+            if (position != RecyclerView.NO_POSITION && itemClickListener != null) {
+                itemClickListener.onItemClick(mList.get(position));
+            }
+        });
+
+        return vh;
+    }
 
     // Constructor to initialize the adapter with a list of PhotoModel objects
     public PhotoAdapter(Context mContext, List<PhotoModel> mList) {
@@ -32,14 +58,6 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
             super(itemView);
             mImageView = itemView.findViewById(R.id.gallery_item);
         }
-    }
-
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Inflate the layout for each item and return a ViewHolder
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.photo_item, parent, false);
-        return new ViewHolder(v);
     }
 
     @Override
@@ -69,4 +87,5 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
     public List<PhotoModel> getList() {
         return mList;
     }
+
 }
