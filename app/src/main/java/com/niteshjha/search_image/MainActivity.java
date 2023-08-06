@@ -1,6 +1,14 @@
 package com.niteshjha.search_image;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +19,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +28,8 @@ import com.bumptech.glide.Glide;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private Button searchButton, clear_button;
     private RecyclerView mRecyclerView;
     private PhotoAdapter mAdapter;
+    private static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 123;
+
 
 
     // Set the number of columns for the grid layout
@@ -162,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
     private void showImageDialog(PhotoModel photo) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_view, null);
+        final Context context = this;
 
         ImageView dialogImageView = dialogView.findViewById(R.id.dialog_image);
         Button saveButton = dialogView.findViewById(R.id.dialog_save_button);
@@ -173,6 +188,42 @@ public class MainActivity extends AppCompatActivity {
 
         // click "Save" button
         saveButton.setOnClickListener(view -> {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                // Get the bitmap from the ImageView using Glide
+                Bitmap bitmap = null;
+                try {
+                    bitmap = Glide.with(context)
+                            .asBitmap()
+                            .load(photo.getUrl())
+                            .submit()
+                            .get();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                if (bitmap != null) {
+                    // Save the bitmap to the gallery
+                    String displayName = "Image_" + System.currentTimeMillis() + ".jpg";
+                    String mimeType = "image/jpeg";
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Images.Media.DISPLAY_NAME, displayName);
+                    values.put(MediaStore.Images.Media.MIME_TYPE, mimeType);
+                    Uri uri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+                    try {
+                        OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                        outputStream.close();
+
+                        Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Toast.makeText(context, "Error saving image", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+                ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
+            }
         });
 
         builder.setView(dialogView);
