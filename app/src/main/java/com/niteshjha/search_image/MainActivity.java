@@ -7,7 +7,10 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,6 +33,7 @@ import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -168,67 +172,100 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void clearResults() {
-        // Clear the adapter data and notify
         mAdapter.getList().clear();
         mAdapter.notifyDataSetChanged();
     }
 
-    private void showImageDialog(PhotoModel photo) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_view, null);
-        final Context context = this;
+    private class ImageDownloadTask extends AsyncTask<Void, Void, Bitmap> {
+        private WeakReference<Context> contextReference;
+        private String imageUrl;
 
-        ImageView dialogImageView = dialogView.findViewById(R.id.dialog_image);
-        Button saveButton = dialogView.findViewById(R.id.dialog_save_button);
+        ImageDownloadTask(Context context, String imageUrl) {
+            contextReference = new WeakReference<>(context);
+            this.imageUrl = imageUrl;
+        }
 
-        // Load and set the image to the dialog ImageView
-        Glide.with(this)
-                .load(photo.getUrl())
-                .into(dialogImageView);
-
-        // click "Save" button
-        saveButton.setOnClickListener(view -> {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                // Get the bitmap from the ImageView using Glide
-                Bitmap bitmap = null;
-                try {
+        @Override
+        protected Bitmap doInBackground(Void... voids) {
+            Bitmap bitmap = null;
+            try {
+                Context context = contextReference.get();
+                if (context != null) {
                     bitmap = Glide.with(context)
                             .asBitmap()
-                            .load(photo.getUrl())
+                            .load(imageUrl)
                             .submit()
                             .get();
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return bitmap;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            Context context = contextReference.get();
+            if (context != null && bitmap != null) {
+                // Save the bitmap to the gallery on the main thread
+                String displayName = "Image_" + System.currentTimeMillis() + ".jpg";
+                String mimeType = "image/jpeg";
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, displayName);
+                values.put(MediaStore.Images.Media.MIME_TYPE, mimeType);
+                Uri uri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
                 if (bitmap != null) {
-                    // Save the bitmap to the gallery
-                    String displayName = "Image_" + System.currentTimeMillis() + ".jpg";
-                    String mimeType = "image/jpeg";
-                    ContentValues values = new ContentValues();
-                    values.put(MediaStore.Images.Media.DISPLAY_NAME, displayName);
-                    values.put(MediaStore.Images.Media.MIME_TYPE, mimeType);
-                    Uri uri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                    AsyncTask.execute(() -> {
+                        try {
+                            OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                            outputStream.close();
 
-                    try {
-                        OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-                        outputStream.close();
-
-                        Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Toast.makeText(context, "Error saving image", Toast.LENGTH_SHORT).show();
-                    }
+                            // Show toast on the main thread after saving
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(() -> {
+                                Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show();
+                            });
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(() -> {
+                                Toast.makeText(context, "Error saving image", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    });
                 }
-            } else {
-                ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
             }
-        });
-
-        builder.setView(dialogView);
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        }
     }
 
+        private void showImageDialog(PhotoModel photo) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            View dialogView = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_image_view, null);
+            final Context context = MainActivity.this;
+
+            ImageView dialogImageView = dialogView.findViewById(R.id.dialog_image);
+            Button saveButton = dialogView.findViewById(R.id.dialog_save_button);
+
+            // Load and set the image to the dialog ImageView
+            Glide.with(MainActivity.this)
+                    .load(photo.getUrl())
+                    .into(dialogImageView);
+
+            // Click "Save" button
+            saveButton.setOnClickListener(view -> {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    // Create and execute the AsyncTask for image downloading
+                    ImageDownloadTask downloadTask = new ImageDownloadTask(context, photo.getUrl());
+                    downloadTask.execute();
+                } else {
+                    ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
+                }
+            });
+
+            builder.setView(dialogView);
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
 }
