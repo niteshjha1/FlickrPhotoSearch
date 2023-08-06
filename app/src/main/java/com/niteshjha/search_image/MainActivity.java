@@ -30,9 +30,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String METHOD_SEARCH = "flickr.photos.search";
 
     private EditText searchEditText;
-    private Button searchButton;
+    private Button searchButton, clear_button;
     private RecyclerView mRecyclerView;
     private PhotoAdapter mAdapter;
+
 
     // Set the number of columns for the grid layout
     private static final int COLUMN_NUM = 1;
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
         searchEditText = findViewById(R.id.search_text);
         searchButton = findViewById(R.id.Search_button);
+        clear_button = findViewById(R.id.Clear_button);
         mRecyclerView = findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(true);
 
@@ -67,6 +69,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Set click listener for Clear button
+        clear_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clearResults();
+            }
+        });
+
     }
 
     // Method to perform image search using Retrofit and Flickr API
@@ -133,5 +144,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("API Failure", t.toString());
             }
         });
+    }
+
+    private void clearResults() {
+        // Clear the adapter data and notify
+        mAdapter.getList().clear();
+        mAdapter.notifyDataSetChanged();
     }
 }

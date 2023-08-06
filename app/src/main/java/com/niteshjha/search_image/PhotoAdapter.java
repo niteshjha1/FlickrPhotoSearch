@@ -48,7 +48,9 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         PhotoModel item = mList.get(position);
 
         // Load image using Glide library
-        Glide.with(mContext).load(item.getUrl()).into(holder.mImageView);
+        Glide.with(mContext)
+                .load(item.getUrl())
+                .into(holder.mImageView);
     }
 
     @Override
@@ -61,5 +63,10 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
     public void addAll(List<PhotoModel> newList) {
         mList.addAll(newList);
         notifyDataSetChanged();
+    }
+
+    // Method to get the list of items
+    public List<PhotoModel> getList() {
+        return mList;
     }
 }
