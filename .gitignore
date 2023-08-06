@@ -1,0 +1,33 @@
+# Gradle files
+/.gradle/
+/build/
+
+# Android Studio files
+/.idea/
+
+# Compiled source code
+/app/build/
+
+# Gradle Wrapper files
+/gradle/wrapper/gradle-wrapper.jar
+/gradle/wrapper/gradle-wrapper.properties
+
+# Caches
+/buildSrc/.gradle/
+/app/.cxx/
+/app/build/intermediates/caches/
+
+# Daemon logs
+/.gradle/daemon/
+/.gradle/worker/
+
+# Native build temporary files
+/app/build/intermediates/cmake/
+/app/build/intermediates/externalNativeBuild/
+/app/.externalNativeBuild/
+
+# Generated JNI libraries
+/app/build/intermediates/transforms/
+caches/
+daemon/
+wrapper/
